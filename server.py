@@ -139,21 +139,24 @@ class ExpensesServer(object):
 	#enddef
 
 	@cherrypy.expose
-	def report(self):
+	def report(self, days=None):
 		user_id = user_validation()
 
 		if not user_id: raise cherrypy.HTTPRedirect('/login')
 
+		if not days: days = 30
+
 		cur = conn.cursor()
-		cur.execute('select sum(amount) from expenses where user_id=%s and current_date - date <= 30;', (user_id, ))
+		cur.execute('select sum(amount) from expenses where user_id=%s and current_date - date < %s;', (user_id, days))
 		total = cur.fetchone()[0]
 
-		sql = 'select category,sum(amount) as sum from expenses where user_id=%s and current_date - date <= 30 group by category order by sum desc;'
-		cur.execute(sql, (user_id, ))
+		sql = 'select category,sum(amount) as sum from expenses where user_id=%s and current_date - date < %s group by category order by sum desc;'
+		cur.execute(sql, (user_id, days))
 		ii = cur.fetchall()
 		cur.close()
 
 		t = Template(file='report.tmpl')
+		t.days = days
 		t.total = total
 		t.itemss = ii
 		return str(t)

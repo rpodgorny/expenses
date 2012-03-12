@@ -97,6 +97,10 @@ function getResultClickHandler() {
   document.getElementById("naseptavacDiv").style.visibility = "hidden";
 } 
 
+function hide_the_shit() {
+  document.getElementById("naseptavacDiv").style.visibility = "hidden";
+} 
+
 </script>
 
 </head>
@@ -129,25 +133,25 @@ $message
 
 <tr>
 <td></td>
-<td><input name='date' type='text' value='$date'></td>
+<td><input name='date' type='text' value='$date' size='10'></td>
 <td>
-<input name='category' type='text' value='$category'
+<input name='category' type='text' value='$category' size='10'
 id="inputText" autocomplete="off"
-onKeyUp="generujNaseptavac(event);" onKeyDown="posunNaseptavac(event);">
+onKeyUp="generujNaseptavac(event);"
+onKeyDown="posunNaseptavac(event);"
+onBlur="hide_the_shit();">
 <div id="naseptavacDiv"></div>
 </td>
-<td><input name='note' type='text' value='$note'></td>
-<td><input name='amount' type='text' value='$amount'></td>
-<td><input name='date_until' type='text' value='$date_until'></td>
+<td><input name='note' type='text' value='$note' size='10'></td>
+<td><input name='amount' type='text' value='$amount' size='5'></td>
+<td><input name='date_until' type='text' value='$date_until' size='10'></td>
 </tr>
 
 </table>
 
-
 <input type='submit'>
 
 </form>
-
 
 </body>
 </html>

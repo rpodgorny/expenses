@@ -1,0 +1,43 @@
+<html>
+<body>
+<head>
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+	google.load("visualization", "1", {packages:["corechart"]});
+	google.setOnLoadCallback(drawChart);
+	function drawChart() {
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'category');
+		data.addColumn('number', 'amount');
+		data.addRows([
+			#for $i in $itemss
+				['$i[0]', $i[1]],
+			#end for
+		]);
+
+		var options = {
+			title: ''
+		};
+
+		var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+		chart.draw(data, options);
+	}
+</script>
+
+</head>
+
+<p>
+total: $total
+</p>
+
+<div id="chart_div" style="width: 900px; height: 500px;"></div>
+
+<table>
+#for $i in $itemss
+<tr><td>$i[0]</td><td>$i[1]</td></tr>
+#end for
+</table>
+
+</body>
+</html>

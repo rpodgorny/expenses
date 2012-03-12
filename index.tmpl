@@ -1,1 +1,153 @@
-pokus vole jako
+<html>
+<head>
+
+<script type="text/javascript">
+document.getElementById("naseptavacDiv").style.visibility = "hidden";
+var lastSelected;
+
+function GetKeyCode(e) {
+  if (e) {
+    return e.charCode ? e.charCode : e.keyCode;
+  }
+  else {
+    return window.event.charCode ? window.event.charCode : window.event.keyCode;
+  }
+} 
+
+function generujNaseptavac(e) {
+  var unicode = GetKeyCode(e);
+  var str = document.getElementById("inputText").value;
+  if (unicode != 38 && unicode != 40 && str != lastSelected) {
+    if (str != "") {
+      if (window.ActiveXObject) {
+      httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+      } else {
+        httpRequest = new XMLHttpRequest();
+      }
+      var url = "/suggest?key=category&text=" + encodeURI(str);
+      httpRequest.open("GET", url, true);     
+      httpRequest.onreadystatechange= function () {processRequest(); } ;
+      httpRequest.send(null);     
+    }
+    else {     
+      document.getElementById("naseptavacDiv").style.visibility = "hidden";
+    }
+  }
+}
+
+function posunNaseptavac(e) {
+  var unicode = GetKeyCode(e);
+  var naseptavac = document.getElementById("naseptavac");
+  if (unicode == 40) {
+    naseptavac.options.selectedIndex = 
+      naseptavac.options.selectedIndex >= 0 && 
+      naseptavac.options.selectedIndex < naseptavac.options.length-1 ?
+      naseptavac.options.selectedIndex+1 : 0;
+    getChangeHandler();
+    return;
+  }
+  else if (unicode == 38) {
+    naseptavac.options.selectedIndex = 
+      naseptavac.options.selectedIndex > 0 ? 
+      naseptavac.options.selectedIndex-1 : naseptavac.options.length-1;
+    getChangeHandler();
+    return;
+  }
+  else if (unicode == 13) {
+    lastSelected = document.getElementById("inputText").value;
+    if (window.event)
+      e.returnValue = false;
+    else
+      e.preventDefault();
+    document.getElementById("naseptavacDiv").style.visibility = "hidden";
+  }
+} 
+
+function processRequest() {
+  if (httpRequest.readyState == 4) {
+    if(httpRequest.status == 200) {
+      var response = httpRequest.responseText;
+      if (response == 'EMPTY') {
+        document.getElementById("naseptavacDiv").style.visibility = "hidden";
+      }
+      else {        
+        document.getElementById("naseptavacDiv").innerHTML = response;
+        document.getElementById("naseptavac").size =
+          document.getElementById("naseptavac").options.length;
+        document.getElementById("naseptavacDiv").style.visibility = "visible";
+      } 
+    }
+    else {
+      alert("error"
+
+        + httpRequest.status +":"+ httpRequest.statusText);
+    }
+  }
+}
+
+function getChangeHandler() {
+  var select = document.getElementById("naseptavac");
+  var nazev = select.options[select.selectedIndex].innerHTML;
+  document.getElementById("inputText").value = nazev.replace(/\&amp;/g,'&');
+}
+ 
+function getResultClickHandler() {
+  getChangeHandler();
+  lastSelected = document.getElementById("inputText").value;  
+  document.getElementById("naseptavacDiv").style.visibility = "hidden";
+} 
+
+</script>
+
+</head>
+<body>
+
+<table><tr>
+<td><a href='/report'>report</a></td>
+<td><a href='/logout'>logout</a></td>
+</tr></table>
+
+<p>
+$message
+</p>
+
+<form method='get'>
+
+<table>
+<tr>
+<th>id</th>
+<th>date</th>
+<th>category</th>
+<th>note</th>
+<th>amount</th>
+<th>date_until</th>
+</tr>
+
+#for $i in $itemss
+<tr><td>$i[0]</td><td>$i[1]</td><td>$i[2]</td><td>$i[3]</td><td>$i[4]</td></tr>
+#end for
+
+<tr>
+<td></td>
+<td><input name='date' type='text' value='$date'></td>
+<td>
+<input name='category' type='text' value='$category'
+id="inputText" autocomplete="off"
+onKeyUp="generujNaseptavac(event);" onKeyDown="posunNaseptavac(event);">
+<div id="naseptavacDiv"></div>
+</td>
+<td><input name='note' type='text' value='$note'></td>
+<td><input name='amount' type='text' value='$amount'></td>
+<td><input name='date_until' type='text' value='$date_until'></td>
+</tr>
+
+</table>
+
+
+<input type='submit'>
+
+</form>
+
+
+</body>
+</html>

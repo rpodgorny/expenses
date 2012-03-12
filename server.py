@@ -1,16 +1,167 @@
 #!/usr/bin/python
 
+import psycopg2
+#import psycopg2.extras
 import cherrypy
 from Cheetah.Template import Template
+import datetime
+
+conn = psycopg2.connect("dbname=expenses user=expenses password=expenses")
+#cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+def user_validation(username=None, password=None):
+	c = cherrypy.request.cookie
+	if not username and 'username' in c: username = c['username'].value
+	if not password and 'password' in c: password = c['password'].value
+
+	if not username: return
+	if not password: return
+
+	cur = conn.cursor()
+	cur.execute('SELECT id,name,password FROM users WHERE name=%s;', (username, ))
+	if cur.rowcount != 1: return
+	i,u,p = cur.fetchone()
+	cur.close()
+
+	if p != password: return None
+
+	return i
+#enddef
 
 class ExpensesServer(object):
 	@cherrypy.expose
-	def index(self, version=None, host=None, domain=None, *args, **kwargs):
+	def index(self, date=None, category=None, note=None, amount=None, date_until=None, *args, **kwargs):
+		message = ''
+
+		user_id = user_validation()
+		print user_id
+		if not user_id: raise cherrypy.HTTPRedirect('/login')
+
+		if amount:
+			try: amount = float(amount)
+			except:
+				amount = None
+				message = 'not a number!'
+			#endtry
+		#endif
+
+		if not date_until: date_until = None
+
+		cur = conn.cursor()
+		if date and category and note and amount:
+			cur.execute('insert into expenses(date, category, note, amount, user_id, date_until) values (%s, %s, %s, %s, %s, %s);', (date, category, note, amount, user_id, date_until))
+			conn.commit()
+
+			date = None
+			category = None
+			note = None
+			amount = None
+			date_until = None
+
+			message = 'inserted %s' % cur.lastrowid
+		#endif
+
+		cur.execute("select id,date,category,note,amount,date_until from expenses WHERE user_id=%s order by id desc limit 5;", (user_id, ))
+		ii = cur.fetchall()
+		cur.close()
+		ii = reversed(ii)
+		print ii
+
+		if not date: date = datetime.datetime.now().strftime('%Y-%m-%d')
+		if not category: category = ''
+		if not note: note = ''
+		if not amount: amount = ''
+
 		t = Template(file='index.tmpl')
+		t.message = message
+		t.itemss = ii
+		t.date = date
+		t.category = category
+		t.note = note
+		t.amount = amount
+		t.date_until = date_until
+		return str(t)
+	#enddef
+
+	@cherrypy.expose
+	def login(self, username=None, password=None):
+		message = ''
+
+		user_id = user_validation(username, password)
+		if user_id:
+			c = cherrypy.response.cookie
+			c['username'] = username
+			c['password'] = password
+			message = 'ok!'
+		else:
+			message = 'not ok!'
+		#endif
+
+		# TODO: hack to prevent cursor leak
+		if message == 'ok!':
+			raise cherrypy.HTTPRedirect('/')
+		#endif
+
+		t = Template(file='login.tmpl')
+		t.message = message
+		t.username = username
+		t.password = password
+		return str(t)
+	#enddef
+
+	@cherrypy.expose
+	def logout(self):
+		c = cherrypy.response.cookie
+		c['username'] = ''
+		c['username']['expires'] = 0
+		c['password'] = ''
+		c['password']['expires'] = 0
+		raise cherrypy.HTTPRedirect('/')
+	#enddef
+
+	@cherrypy.expose
+	def suggest(self, key, text, limit=5):
+		user_id = user_validation()
+		if not user_id: raise cherrypy.HTTPRedirect('/login')
+
+		cur = conn.cursor()
+		# TODO: injection!
+		sql = 'select distinct('+key+') from expenses where user_id=%s and '+key+' like %s limit %s;'
+		cur.execute(sql, (user_id, text+'%', limit))
+		if cur.rowcount == 0: return 'EMPTY'
+		ii = cur.fetchall()
+		cur.close()
+		ii = (i[0] for i in ii)
+
+		t = Template(file='suggest.tmpl')
+		t.itemss = ii
+		return str(t)
+	#enddef
+
+	@cherrypy.expose
+	def report(self):
+		user_id = user_validation()
+
+		if not user_id: raise cherrypy.HTTPRedirect('/login')
+
+		cur = conn.cursor()
+		cur.execute('select sum(amount) from expenses where user_id=%s and current_date - date <= 30;', (user_id, ))
+		total = cur.fetchone()[0]
+
+		sql = 'select category,sum(amount) as sum from expenses where user_id=%s and current_date - date <= 30 group by category order by sum desc;'
+		cur.execute(sql, (user_id, ))
+		ii = cur.fetchall()
+		cur.close()
+
+		t = Template(file='report.tmpl')
+		t.total = total
+		t.itemss = ii
 		return str(t)
 	#enddef
 #endclass
 
 cherrypy.server.socket_host = '0.0.0.0'
-cherrypy.server.socket_port = 8765
+cherrypy.server.socket_port = 8777
 cherrypy.quickstart(ExpensesServer())
+
+conn.close()

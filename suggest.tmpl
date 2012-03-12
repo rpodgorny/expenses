@@ -1,0 +1,11 @@
+<select id="naseptavac"
+#if 0
+style="width:300px; position:absolute;" 
+#end if
+style="position:absolute;" 
+onClick="getResultClickHandler();"
+onChange="getChangeHandler();" >
+#for $i in $itemss
+<option>$i</option>
+#end for
+</select>

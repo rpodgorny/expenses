@@ -2,7 +2,7 @@
 <head>
 
 <script type="text/javascript">
-document.getElementById("naseptavacDiv").style.visibility = "hidden";
+document.getElementById("category_naseptavacDiv").style.visibility = "hidden";
 var lastSelected;
 
 function GetKeyCode(e) {
@@ -14,9 +14,9 @@ function GetKeyCode(e) {
   }
 } 
 
-function generujNaseptavac(e) {
+function generujNaseptavac(name, e) {
   var unicode = GetKeyCode(e);
-  var str = document.getElementById("inputText").value;
+  var str = document.getElementById(name+"_inputText").value;
   if (unicode != 38 && unicode != 40 && str != lastSelected) {
     if (str != "") {
       if (window.ActiveXObject) {
@@ -24,81 +24,79 @@ function generujNaseptavac(e) {
       } else {
         httpRequest = new XMLHttpRequest();
       }
-      var url = "/suggest?key=category&text=" + encodeURI(str);
+      var url = "/suggest?key="+name+"&text=" + encodeURI(str);
       httpRequest.open("GET", url, true);     
-      httpRequest.onreadystatechange= function () {processRequest(); } ;
+      httpRequest.onreadystatechange= function () {processRequest(name); } ;
       httpRequest.send(null);     
     }
     else {     
-      document.getElementById("naseptavacDiv").style.visibility = "hidden";
+      document.getElementById(name+"_naseptavacDiv").style.visibility = "hidden";
     }
   }
 }
 
-function posunNaseptavac(e) {
+function posunNaseptavac(name, e) {
   var unicode = GetKeyCode(e);
-  var naseptavac = document.getElementById("naseptavac");
+  var naseptavac = document.getElementById(name+"_naseptavac");
   if (unicode == 40) {
     naseptavac.options.selectedIndex = 
       naseptavac.options.selectedIndex >= 0 && 
       naseptavac.options.selectedIndex < naseptavac.options.length-1 ?
       naseptavac.options.selectedIndex+1 : 0;
-    getChangeHandler();
+    getChangeHandler(name);
     return;
   }
   else if (unicode == 38) {
     naseptavac.options.selectedIndex = 
       naseptavac.options.selectedIndex > 0 ? 
       naseptavac.options.selectedIndex-1 : naseptavac.options.length-1;
-    getChangeHandler();
+    getChangeHandler(name);
     return;
   }
   else if (unicode == 13) {
-    lastSelected = document.getElementById("inputText").value;
+    lastSelected = document.getElementById(name+"_inputText").value;
     if (window.event)
       e.returnValue = false;
     else
       e.preventDefault();
-    document.getElementById("naseptavacDiv").style.visibility = "hidden";
+    document.getElementById(name+"_naseptavacDiv").style.visibility = "hidden";
   }
 } 
 
-function processRequest() {
+function processRequest(name) {
   if (httpRequest.readyState == 4) {
     if(httpRequest.status == 200) {
       var response = httpRequest.responseText;
       if (response == 'EMPTY') {
-        document.getElementById("naseptavacDiv").style.visibility = "hidden";
+        document.getElementById(name+"_naseptavacDiv").style.visibility = "hidden";
       }
       else {        
-        document.getElementById("naseptavacDiv").innerHTML = response;
-        document.getElementById("naseptavac").size =
-          document.getElementById("naseptavac").options.length;
-        document.getElementById("naseptavacDiv").style.visibility = "visible";
+        document.getElementById(name+"_naseptavacDiv").innerHTML = response;
+        document.getElementById(name+"_naseptavac").size =
+          document.getElementById(name+"_naseptavac").options.length;
+        document.getElementById(name+"_naseptavacDiv").style.visibility = "visible";
       } 
     }
     else {
-      alert("error"
-
-        + httpRequest.status +":"+ httpRequest.statusText);
+      alert("error"+ httpRequest.status +":"+ httpRequest.statusText);
     }
   }
 }
 
-function getChangeHandler() {
-  var select = document.getElementById("naseptavac");
+function getChangeHandler(name) {
+  var select = document.getElementById(name+"_naseptavac");
   var nazev = select.options[select.selectedIndex].innerHTML;
-  document.getElementById("inputText").value = nazev.replace(/\&amp;/g,'&');
+  document.getElementById(name+"_inputText").value = nazev.replace(/\&amp;/g,'&');
 }
  
-function getResultClickHandler() {
-  getChangeHandler();
-  lastSelected = document.getElementById("inputText").value;  
-  document.getElementById("naseptavacDiv").style.visibility = "hidden";
+function getResultClickHandler(name) {
+  getChangeHandler(name);
+  lastSelected = document.getElementById(name+"_inputText").value;  
+  document.getElementById(name+"_naseptavacDiv").style.visibility = "hidden";
 } 
 
-function hide_the_shit() {
-  document.getElementById("naseptavacDiv").style.visibility = "hidden";
+function hide_the_shit(name) {
+  document.getElementById(name+"_naseptavacDiv").style.visibility = "hidden";
 } 
 
 </script>
@@ -136,11 +134,11 @@ $message
 <td><input name='date' type='text' value='$date' size='10'></td>
 <td>
 <input name='category' type='text' value='$category' size='10'
-id="inputText" autocomplete="off"
-onKeyUp="generujNaseptavac(event);"
-onKeyDown="posunNaseptavac(event);"
-onBlur="hide_the_shit();">
-<div id="naseptavacDiv"></div>
+id="category_inputText" autocomplete="off"
+onKeyUp="generujNaseptavac('category', event);"
+onKeyDown="posunNaseptavac('category', event);"
+onBlur="hide_the_shit('category');">
+<div id="category_naseptavacDiv"></div>
 </td>
 <td><input name='note' type='text' value='$note' size='10'></td>
 <td><input name='amount' type='text' value='$amount' size='5'></td>

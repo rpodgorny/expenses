@@ -132,6 +132,7 @@ class ExpensesServer(object):
 		ii = (i[0] for i in ii)
 
 		t = Template(file='suggest.tmpl')
+		t.name = key
 		t.itemss = ii
 		return str(t)
 	#enddef

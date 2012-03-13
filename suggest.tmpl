@@ -1,10 +1,10 @@
-<select id="naseptavac"
+<select id="${name}_naseptavac"
 #if 0
 style="width:300px; position:absolute;" 
 #end if
 style="position:absolute;" 
-onClick="getResultClickHandler();"
-onChange="getChangeHandler();" >
+onClick="getResultClickHandler('$name');"
+onChange="getChangeHandler('$name');" >
 #for $i in $itemss
 <option>$i</option>
 #end for

@@ -34,7 +34,6 @@ class ExpensesServer(object):
 		message = ''
 
 		user_id = user_validation()
-		print user_id
 		if not user_id: raise cherrypy.HTTPRedirect('/login')
 
 		if amount:
@@ -65,7 +64,6 @@ class ExpensesServer(object):
 		ii = cur.fetchall()
 		cur.close()
 		ii = reversed(ii)
-		print ii
 
 		if not date: date = datetime.datetime.now().strftime('%Y-%m-%d')
 		if not category: category = ''

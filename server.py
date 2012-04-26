@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import psycopg2
-#import psycopg2.extras
+import psycopg2.extras
 import cherrypy
 from Cheetah.Template import Template
 import datetime
@@ -30,11 +30,13 @@ def user_validation(username=None, password=None):
 
 class ExpensesServer(object):
 	@cherrypy.expose
-	def index(self, date=None, category=None, note=None, amount=None, date_until=None, *args, **kwargs):
+	def index(self, show_last=None, date=None, category=None, note=None, amount=None, date_until=None, *args, **kwargs):
 		message = ''
 
 		user_id = user_validation()
 		if not user_id: raise cherrypy.HTTPRedirect('/login')
+
+		if not show_last: show_last = 5
 
 		if amount:
 			try: amount = float(amount)
@@ -60,7 +62,7 @@ class ExpensesServer(object):
 			message = 'inserted %s' % cur.lastrowid
 		#endif
 
-		cur.execute("select id,date,category,note,amount,date_until from expenses WHERE user_id=%s order by id desc limit 5;", (user_id, ))
+		cur.execute("select id,date,category,note,amount,date_until from expenses WHERE user_id=%s order by id desc limit %s;", (user_id, show_last))
 		ii = cur.fetchall()
 		cur.close()
 		ii = reversed(ii)
@@ -71,6 +73,7 @@ class ExpensesServer(object):
 		if not amount: amount = ''
 
 		t = Template(file='index.tmpl')
+		t.show_last = show_last
 		t.message = message
 		t.itemss = ii
 		t.date = date
@@ -79,6 +82,16 @@ class ExpensesServer(object):
 		t.amount = amount
 		t.date_until = date_until
 		return str(t)
+	#enddef
+
+	@cherrypy.expose
+	def list(self):
+		dict_cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+		dict_cur.execute('SELECT * FROM expenses;')
+		a = dict_cur.fetchone()
+		print a.keys()
+		dict_cur.close()
+		return ''
 	#enddef
 
 	@cherrypy.expose

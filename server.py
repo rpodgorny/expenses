@@ -88,10 +88,13 @@ class ExpensesServer(object):
 	def list(self):
 		dict_cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 		dict_cur.execute('SELECT * FROM expenses;')
-		a = dict_cur.fetchone()
-		print a.keys()
+		ii = dict_cur.fetchall()
 		dict_cur.close()
-		return ''
+
+		t = Template(file='list.tmpl')
+		t.fields = sorted(ii[0].keys())
+		t.iitems = ii
+		return str(t)
 	#enddef
 
 	@cherrypy.expose
